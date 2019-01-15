@@ -1,11 +1,12 @@
 package com.fileStorage.controller;
 
+import com.fileStorage.exception.FileNotMuchException;
+import com.fileStorage.exception.NotEnoughSpaceException;
 import com.fileStorage.model.File;
 import com.fileStorage.service.FileService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -25,8 +26,23 @@ public class FileController {
         return fileService.findAllFiles();
     }
 
+    @PostMapping
+    @Transactional
+    public File saveFile(@RequestBody File file) throws FileNotMuchException, NotEnoughSpaceException {
+        return fileService.saveFile(file);
+    }
 
+    @DeleteMapping("{id}")
+    @Transactional
+    public String delete(@PathVariable("id") File file) {
+        fileService.delete(file);
+        return "File with id " + file.getId() + " was deleted";
+    }
 
+    @GetMapping("{id}")
+    public File getOne(@PathVariable("id") File file) {
+        return file;
+    }
 
 
 }

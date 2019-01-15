@@ -19,7 +19,7 @@ public class File {
     private String format;
     private long size;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "storage_id")
     private Storage storage;
 
