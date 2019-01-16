@@ -6,8 +6,10 @@ import com.fileStorage.exception.FileNotMuchException;
 import com.fileStorage.exception.NotEnoughSpaceException;
 import com.fileStorage.model.File;
 import com.fileStorage.model.Storage;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -31,13 +33,16 @@ public class FileService {
     }
 
 
+    @Transactional
     public File saveFile(File file) throws FileNotMuchException, NotEnoughSpaceException {
 
         if (isValidName(file.getName())) {
             throw new FileNotMuchException("File name is empty or more than 10 characters");
         }
-        if (file.getStorage().getStorageSize() >= file.getSize()) {
-            Storage storage = storageDAO.getOne(file.getStorage().getId());
+
+        Storage storage = storageDAO.getOne(file.getStorage().getId());
+
+        if (storage.getStorageSize() >= file.getSize()) {
             storage.setStorageSize((storage.getStorageSize() - file.getSize()));
             storageDAO.saveAndFlush(storage);
         } else {
@@ -45,6 +50,35 @@ public class FileService {
         }
 
         return fileDAO.save(file);
+
+    }
+
+    @Transactional
+    public void deleteFile(File file) {
+        fileDAO.delete(file);
+    }
+
+    @Transactional
+    public File updateFile(File fileFromDb, File file) throws NotEnoughSpaceException, FileNotMuchException {
+        if (isValidName(file.getName())) {
+            throw new FileNotMuchException("File name is empty or more than 10 characters");
+        }
+
+        Storage storage = storageDAO.getOne(file.getStorage().getId());
+
+        long differenceIfSizeWasChanged = fileFromDb.getSize() - file.getSize();
+        storage.setStorageSize(storage.getStorageSize() + differenceIfSizeWasChanged);
+
+        if (storage.getStorageSize() >= 0) {
+            storageDAO.saveAndFlush(storage);
+        } else {
+            throw new NotEnoughSpaceException("Storage with id " + file.getStorage().getId() + " doesnt have enough free space for file with id " + file.getId());
+        }
+
+        BeanUtils.copyProperties(file, fileFromDb, "id");
+        return fileDAO.save(fileFromDb);
+
+
     }
 
 
@@ -53,10 +87,5 @@ public class FileService {
             return true;
         }
         return false;
-    }
-
-
-    public void delete(File file) {
-        fileDAO.delete(file);
     }
 }
