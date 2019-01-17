@@ -1,17 +1,20 @@
 package com.fileStorage.model;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import javax.persistence.*;
 
 
 @Entity
 @Table(name = "storages")
-@Data
+@ToString
+@EqualsAndHashCode(of={"id"})
 public class Storage {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
     private String formatsSupported;
     private String storageCountry;

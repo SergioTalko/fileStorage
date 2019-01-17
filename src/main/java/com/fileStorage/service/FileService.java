@@ -22,7 +22,7 @@ public class FileService {
     private final StorageDAO storageDAO;
 
     @Autowired
-    public FileService(FileDAO fileDAO, StorageService storageService, StorageDAO storageDAO) {
+    public FileService(FileDAO fileDAO, StorageDAO storageDAO) {
         this.fileDAO = fileDAO;
         this.storageDAO = storageDAO;
     }
@@ -46,7 +46,7 @@ public class FileService {
             storage.setStorageSize((storage.getStorageSize() - file.getSize()));
             storageDAO.saveAndFlush(storage);
         } else {
-            throw new NotEnoughSpaceException("Storage with id " + file.getStorage().getId() + " doesnt have enough free space for file with id " + file.getId());
+            throw new NotEnoughSpaceException("Storage with id " + file.getStorage().getId() + " doesnt have enough free space for file with name " + file.getName());
         }
 
         return fileDAO.save(file);
@@ -87,5 +87,28 @@ public class FileService {
             return true;
         }
         return false;
+    }
+
+    public String transferFile(File fileFromDb, Storage storageTo) throws NotEnoughSpaceException {
+
+        Storage storageForTransfer = storageDAO.getOne(storageTo.getId());
+        Storage currentFileStorage = fileFromDb.getStorage();
+
+        if (storageForTransfer.getStorageSize() >= fileFromDb.getSize()) {
+            fileFromDb.setStorage(storageForTransfer);
+            currentFileStorage.setStorageSize(currentFileStorage.getStorageSize() + fileFromDb.getSize());
+            storageForTransfer.setStorageSize(storageForTransfer.getStorageSize() - fileFromDb.getSize());
+
+        }else {
+            throw new NotEnoughSpaceException("Storage with id " + storageTo.getId() + " doesnt have enough space for file with id " + fileFromDb.getId());
+        }
+
+        storageDAO.save(storageForTransfer);
+        storageDAO.save(currentFileStorage);
+        fileDAO.save(fileFromDb);
+
+
+
+        return "File with id " + fileFromDb.getId() + " was successfully transferred to storage with id " + storageTo.getId();
     }
 }

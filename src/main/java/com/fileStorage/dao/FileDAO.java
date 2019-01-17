@@ -10,5 +10,7 @@ import java.util.List;
 
 public interface FileDAO extends JpaRepository<File,Long> {
 
+    List<File> findAllByStorageId(long storageId);
+
 
 }

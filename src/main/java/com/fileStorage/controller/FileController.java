@@ -3,6 +3,7 @@ package com.fileStorage.controller;
 import com.fileStorage.exception.FileNotMuchException;
 import com.fileStorage.exception.NotEnoughSpaceException;
 import com.fileStorage.model.File;
+import com.fileStorage.model.Storage;
 import com.fileStorage.service.FileService;
 import com.fileStorage.service.StorageService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,12 +17,10 @@ public class FileController {
 
     private final FileService fileService;
 
-    private final StorageService storageService;
 
     @Autowired
-    public FileController(FileService fileService, StorageService storageService) {
+    public FileController(FileService fileService) {
         this.fileService = fileService;
-        this.storageService = storageService;
     }
 
     @GetMapping
@@ -53,6 +52,15 @@ public class FileController {
     ) throws NotEnoughSpaceException, FileNotMuchException {
 
         return fileService.updateFile(fileFromDb,file);
+    }
+
+    @PutMapping("fileTransfer/{id}")
+    public String transferFile(
+            @PathVariable("id") File fileFromDb,
+            @RequestBody Storage storageTo
+            ) throws NotEnoughSpaceException {
+
+        return fileService.transferFile(fileFromDb,storageTo);
     }
 
 

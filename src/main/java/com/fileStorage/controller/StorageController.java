@@ -1,8 +1,9 @@
 package com.fileStorage.controller;
 
-import com.fileStorage.exception.FileNotMuchException;
+import com.fileStorage.exception.NotEnoughSpaceException;
 import com.fileStorage.model.Storage;
 import com.fileStorage.service.StorageService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -37,10 +38,27 @@ public class StorageController {
     }
 
     @DeleteMapping("{id}")
-    @Transactional
     public String delete(@PathVariable("id") Storage storage) {
         storageService.delete(storage);
         return "Storage with id " + storage.getId() + " was deleted";
+    }
+
+    @PutMapping("{id}")
+    public Storage updateStorage(
+            @PathVariable("id") Storage storageFromDb,
+            @RequestBody Storage storage
+    ) {
+        BeanUtils.copyProperties(storage, storageFromDb, "id", "storageSize");
+        return storageService.updateStorage(storageFromDb);
+    }
+
+    @PutMapping("/transferAll/{id}")
+    public String transferAll(
+            @PathVariable("id") Storage storageFrom,
+            @RequestBody Storage storageTo
+    ) throws NotEnoughSpaceException {
+       return storageService.transferAll(storageFrom,storageTo);
+
     }
 
 
