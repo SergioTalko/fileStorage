@@ -1,6 +1,7 @@
 package com.fileStorage.controller;
 
 import com.fileStorage.exception.NotEnoughSpaceException;
+import com.fileStorage.exception.NotFormatSupported;
 import com.fileStorage.model.Storage;
 import com.fileStorage.service.StorageService;
 import org.springframework.beans.BeanUtils;
@@ -56,7 +57,7 @@ public class StorageController {
     public String transferAll(
             @PathVariable("id") Storage storageFrom,
             @RequestBody Storage storageTo
-    ) throws NotEnoughSpaceException {
+    ) throws NotEnoughSpaceException, NotFormatSupported {
        return storageService.transferAll(storageFrom,storageTo);
 
     }

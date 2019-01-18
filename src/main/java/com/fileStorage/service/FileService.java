@@ -4,6 +4,7 @@ import com.fileStorage.dao.FileDAO;
 import com.fileStorage.dao.StorageDAO;
 import com.fileStorage.exception.FileNotMuchException;
 import com.fileStorage.exception.NotEnoughSpaceException;
+import com.fileStorage.exception.NotFormatSupported;
 import com.fileStorage.model.File;
 import com.fileStorage.model.Storage;
 import org.springframework.beans.BeanUtils;
@@ -34,10 +35,14 @@ public class FileService {
 
 
     @Transactional
-    public File saveFile(File file) throws FileNotMuchException, NotEnoughSpaceException {
+    public File saveFile(File file) throws FileNotMuchException, NotEnoughSpaceException, NotFormatSupported {
 
         if (isValidName(file.getName())) {
             throw new FileNotMuchException("File name is empty or more than 10 characters");
+        }
+
+        if (!isValidFormatStorages(file, storageDAO.getOne(file.getStorage().getId()))){
+            throw new NotFormatSupported("This format of file not supported in this storage");
         }
 
         Storage storage = storageDAO.getOne(file.getStorage().getId());
@@ -59,9 +64,13 @@ public class FileService {
     }
 
     @Transactional
-    public File updateFile(File fileFromDb, File file) throws NotEnoughSpaceException, FileNotMuchException {
+    public File updateFile(File fileFromDb, File file) throws NotEnoughSpaceException, FileNotMuchException, NotFormatSupported {
         if (isValidName(file.getName())) {
             throw new FileNotMuchException("File name is empty or more than 10 characters");
+        }
+
+        if (!isValidFormatStorages(fileFromDb, storageDAO.getOne(file.getStorage().getId()))){
+            throw new NotFormatSupported("This format of file not supported in this storage");
         }
 
         Storage storage = storageDAO.getOne(file.getStorage().getId());
@@ -81,18 +90,15 @@ public class FileService {
 
     }
 
-
-    private boolean isValidName(String name) {
-        if (name != null && name.length() > 10) {
-            return true;
-        }
-        return false;
-    }
-
-    public String transferFile(File fileFromDb, Storage storageTo) throws NotEnoughSpaceException {
+    @Transactional
+    public String transferFile(File fileFromDb, Storage storageTo) throws NotEnoughSpaceException, NotFormatSupported {
 
         Storage storageForTransfer = storageDAO.getOne(storageTo.getId());
         Storage currentFileStorage = fileFromDb.getStorage();
+
+        if (!isValidFormatStorages(fileFromDb, storageDAO.getOne(storageTo.getId()))){
+            throw new NotFormatSupported("This format of file not supported in this storage");
+        }
 
         if (storageForTransfer.getStorageSize() >= fileFromDb.getSize()) {
             fileFromDb.setStorage(storageForTransfer);
@@ -110,5 +116,29 @@ public class FileService {
 
 
         return "File with id " + fileFromDb.getId() + " was successfully transferred to storage with id " + storageTo.getId();
+    }
+
+
+    private boolean isValidName(String name) {
+        if (name != null && name.length() > 10) {
+            return true;
+        }
+        return false;
+    }
+
+    private boolean isValidFormatStorages(File file, Storage storage){
+
+        String[] formats = storage.getFormatsSupported().split(",");
+
+        for (String format: formats
+             ) {
+            if (format.equals(file.getFormat())){
+                return true;
+            }
+        }
+
+
+
+        return false;
     }
 }

@@ -2,6 +2,7 @@ package com.fileStorage.controller;
 
 import com.fileStorage.exception.FileNotMuchException;
 import com.fileStorage.exception.NotEnoughSpaceException;
+import com.fileStorage.exception.NotFormatSupported;
 import com.fileStorage.model.File;
 import com.fileStorage.model.Storage;
 import com.fileStorage.service.FileService;
@@ -29,7 +30,7 @@ public class FileController {
     }
 
     @PostMapping
-    public File saveFile(@RequestBody File file) throws FileNotMuchException, NotEnoughSpaceException {
+    public File saveFile(@RequestBody File file) throws FileNotMuchException, NotEnoughSpaceException, NotFormatSupported {
         return fileService.saveFile(file);
     }
 
@@ -49,7 +50,7 @@ public class FileController {
     public File update(
             @PathVariable("id") File fileFromDb,
             @RequestBody File file
-    ) throws NotEnoughSpaceException, FileNotMuchException {
+    ) throws NotEnoughSpaceException, FileNotMuchException, NotFormatSupported {
 
         return fileService.updateFile(fileFromDb,file);
     }
@@ -58,7 +59,7 @@ public class FileController {
     public String transferFile(
             @PathVariable("id") File fileFromDb,
             @RequestBody Storage storageTo
-            ) throws NotEnoughSpaceException {
+            ) throws NotEnoughSpaceException, NotFormatSupported {
 
         return fileService.transferFile(fileFromDb,storageTo);
     }
