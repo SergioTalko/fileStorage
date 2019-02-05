@@ -35,7 +35,7 @@ public class FileService {
 
 
     @Transactional
-    public File saveFile(File file) throws FileNotMuchException, NotEnoughSpaceException, NotFormatSupported {
+    public File saveFile(File file) throws Exception {
 
         if (isValidName(file.getName())) {
             throw new FileNotMuchException("File name is empty or more than 10 characters");
@@ -64,7 +64,7 @@ public class FileService {
     }
 
     @Transactional
-    public File updateFile(File fileFromDb, File file) throws NotEnoughSpaceException, FileNotMuchException, NotFormatSupported {
+    public File updateFile(File fileFromDb, File file) throws Exception {
         if (isValidName(file.getName())) {
             throw new FileNotMuchException("File name is empty or more than 10 characters");
         }
@@ -91,7 +91,7 @@ public class FileService {
     }
 
     @Transactional
-    public String transferFile(File fileFromDb, Storage storageTo) throws NotEnoughSpaceException, NotFormatSupported {
+    public String transferFile(File fileFromDb, Storage storageTo) throws Exception {
 
         Storage storageForTransfer = storageDAO.getOne(storageTo.getId());
         Storage currentFileStorage = fileFromDb.getStorage();

@@ -47,7 +47,7 @@ public class StorageService {
     }
 
     @Transactional
-    public String transferAll(Storage storageFrom, Storage storageTo) throws NotEnoughSpaceException, NotFormatSupported {
+    public String transferAll(Storage storageFrom, Storage storageTo) throws Exception {
 
         Storage getStorageTo = storageDAO.getOne(storageTo.getId());
 
@@ -70,8 +70,8 @@ public class StorageService {
             throw new NotEnoughSpaceException("Storage with id " + storageTo.getId() + "doesnt have enough space for files from storage with id " + storageFrom.getId());
         }
 
-        storageDAO.save(storageFrom);
-        storageDAO.save(getStorageTo);
+        storageDAO.saveAndFlush(storageFrom);
+        storageDAO.saveAndFlush(getStorageTo);
 
         return "All files from storage with id " + storageFrom.getId() + " was transferred to storage with id " + storageTo.getId();
     }

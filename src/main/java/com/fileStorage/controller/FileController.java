@@ -1,12 +1,8 @@
 package com.fileStorage.controller;
 
-import com.fileStorage.exception.FileNotMuchException;
-import com.fileStorage.exception.NotEnoughSpaceException;
-import com.fileStorage.exception.NotFormatSupported;
 import com.fileStorage.model.File;
 import com.fileStorage.model.Storage;
 import com.fileStorage.service.FileService;
-import com.fileStorage.service.StorageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,7 +26,7 @@ public class FileController {
     }
 
     @PostMapping
-    public File saveFile(@RequestBody File file) throws FileNotMuchException, NotEnoughSpaceException, NotFormatSupported {
+    public File saveFile(@RequestBody File file) throws Exception{
         return fileService.saveFile(file);
     }
 
@@ -50,7 +46,7 @@ public class FileController {
     public File update(
             @PathVariable("id") File fileFromDb,
             @RequestBody File file
-    ) throws NotEnoughSpaceException, FileNotMuchException, NotFormatSupported {
+    ) throws Exception {
 
         return fileService.updateFile(fileFromDb,file);
     }
@@ -59,7 +55,7 @@ public class FileController {
     public String transferFile(
             @PathVariable("id") File fileFromDb,
             @RequestBody Storage storageTo
-            ) throws NotEnoughSpaceException, NotFormatSupported {
+            ) throws Exception {
 
         return fileService.transferFile(fileFromDb,storageTo);
     }
