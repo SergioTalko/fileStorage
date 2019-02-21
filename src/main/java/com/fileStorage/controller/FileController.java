@@ -8,8 +8,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@CrossOrigin(origins = "http://localhost:4200")
 @RestController
-@RequestMapping("file")
+@RequestMapping(path = "/file")
 public class FileController {
 
     private final FileService fileService;
@@ -31,9 +32,9 @@ public class FileController {
     }
 
     @DeleteMapping("{id}")
-    public String delete(@PathVariable("id") File file) {
-        fileService.deleteFile(file);
-        return "File with id " + file.getId() + " was deleted";
+    public String delete(@PathVariable("id") Long id) {
+        fileService.deleteFile(id);
+        return "File with id " + id + " was deleted";
     }
 
     @GetMapping("{id}")
@@ -42,7 +43,7 @@ public class FileController {
     }
 
 
-    @PutMapping("{id}")
+    @PutMapping(path={"{id}"})
     public File update(
             @PathVariable("id") File fileFromDb,
             @RequestBody File file
@@ -59,6 +60,4 @@ public class FileController {
 
         return fileService.transferFile(fileFromDb,storageTo);
     }
-
-
 }

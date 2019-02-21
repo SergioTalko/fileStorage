@@ -19,7 +19,6 @@ public class FileService {
 
 
     private final FileDAO fileDAO;
-
     private final StorageDAO storageDAO;
 
     @Autowired
@@ -27,7 +26,6 @@ public class FileService {
         this.fileDAO = fileDAO;
         this.storageDAO = storageDAO;
     }
-
 
     public List<File> findAllFiles() {
         return fileDAO.findAll();
@@ -41,26 +39,31 @@ public class FileService {
             throw new FileNotMuchException("File name is empty or more than 10 characters");
         }
 
-        if (!isValidFormatStorages(file, storageDAO.getOne(file.getStorage().getId()))){
-            throw new NotFormatSupported("This format of file not supported in this storage");
+
+        if (file.getStorage() != null) {
+            if (!isValidFormatStorages(file, storageDAO.getOne(file.getStorage().getId()))) {
+                throw new NotFormatSupported("This format of file not supported in this storage");
+            }
         }
 
-        Storage storage = storageDAO.getOne(file.getStorage().getId());
+        if (file.getStorage() == null) {
+            return fileDAO.save(file);
+        }
 
-        if (storage.getStorageSize() >= file.getSize()) {
-            storage.setStorageSize((storage.getStorageSize() - file.getSize()));
-            storageDAO.saveAndFlush(storage);
+        Long allFileSizeInStorage = fileDAO.findAllByStorageId(file.getStorage().getId()).stream().mapToLong(File::getSize).sum();
+        Long freeSpaceInStorage = file.getStorage().getStorageSize() - allFileSizeInStorage;
+
+        if (freeSpaceInStorage >= file.getSize()) {
+            return fileDAO.save(file);
         } else {
             throw new NotEnoughSpaceException("Storage with id " + file.getStorage().getId() + " doesnt have enough free space for file with name " + file.getName());
         }
 
-        return fileDAO.save(file);
-
     }
 
     @Transactional
-    public void deleteFile(File file) {
-        fileDAO.delete(file);
+    public void deleteFile(Long id) {
+        fileDAO.delete(fileDAO.getOne(id));
     }
 
     @Transactional
@@ -69,24 +72,26 @@ public class FileService {
             throw new FileNotMuchException("File name is empty or more than 10 characters");
         }
 
-        if (!isValidFormatStorages(fileFromDb, storageDAO.getOne(file.getStorage().getId()))){
+        if (!isValidFormatStorages(fileFromDb, storageDAO.getOne(file.getStorage().getId()))) {
             throw new NotFormatSupported("This format of file not supported in this storage");
         }
 
-        Storage storage = storageDAO.getOne(file.getStorage().getId());
+        if (file.getStorage() == null) {
+            return fileDAO.save(file);
+        }
+
+        Long allFileSizeInStorage = fileDAO.findAllByStorageId(file.getStorage().getId()).stream().mapToLong(File::getSize).sum();
+        Long freeSpaceInStorage = file.getStorage().getStorageSize() - allFileSizeInStorage;
 
         long differenceIfSizeWasChanged = fileFromDb.getSize() - file.getSize();
-        storage.setStorageSize(storage.getStorageSize() + differenceIfSizeWasChanged);
 
-        if (storage.getStorageSize() >= 0) {
-            storageDAO.saveAndFlush(storage);
+
+        if (freeSpaceInStorage >= freeSpaceInStorage + differenceIfSizeWasChanged) {
+            BeanUtils.copyProperties(file, fileFromDb, "id");
+            return fileDAO.save(fileFromDb);
         } else {
             throw new NotEnoughSpaceException("Storage with id " + file.getStorage().getId() + " doesnt have enough free space for file with id " + file.getId());
         }
-
-        BeanUtils.copyProperties(file, fileFromDb, "id");
-        return fileDAO.save(fileFromDb);
-
 
     }
 
@@ -96,7 +101,7 @@ public class FileService {
         Storage storageForTransfer = storageDAO.getOne(storageTo.getId());
         Storage currentFileStorage = fileFromDb.getStorage();
 
-        if (!isValidFormatStorages(fileFromDb, storageDAO.getOne(storageTo.getId()))){
+        if (!isValidFormatStorages(fileFromDb, storageDAO.getOne(storageTo.getId()))) {
             throw new NotFormatSupported("This format of file not supported in this storage");
         }
 
@@ -105,14 +110,13 @@ public class FileService {
             currentFileStorage.setStorageSize(currentFileStorage.getStorageSize() + fileFromDb.getSize());
             storageForTransfer.setStorageSize(storageForTransfer.getStorageSize() - fileFromDb.getSize());
 
-        }else {
+        } else {
             throw new NotEnoughSpaceException("Storage with id " + storageTo.getId() + " doesnt have enough space for file with id " + fileFromDb.getId());
         }
 
         storageDAO.save(storageForTransfer);
         storageDAO.save(currentFileStorage);
         fileDAO.save(fileFromDb);
-
 
 
         return "File with id " + fileFromDb.getId() + " was successfully transferred to storage with id " + storageTo.getId();
@@ -126,17 +130,16 @@ public class FileService {
         return false;
     }
 
-    private boolean isValidFormatStorages(File file, Storage storage){
+    private boolean isValidFormatStorages(File file, Storage storage) {
 
         String[] formats = storage.getFormatsSupported().split(",");
 
-        for (String format: formats
-             ) {
-            if (format.equals(file.getFormat())){
+        for (String format : formats
+        ) {
+            if (format.equals(file.getFormat())) {
                 return true;
             }
         }
-
 
 
         return false;
